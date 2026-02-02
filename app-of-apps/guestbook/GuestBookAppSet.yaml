@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: guestbook-appset
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+        - env: dev
+          ns: guestbook-dev
+        - env: staging
+          ns: guestbook-staging
+        - env: prod
+          ns: guestbook
+  template:
+    metadata:
+      # The name must be unique, so we use the environment suffix.
+      name: 'my-app-{{env}}'
+    spec:
+      project: my-project
+      source:
+        repoURL: https://github.com/mronconis/argocd-agent-autonomous-demo
+        targetRevision: HEAD
+        path: apps/guestbook
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ns}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
